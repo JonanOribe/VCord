@@ -1,7 +1,7 @@
 from multiprocessing import context
 from pydoc import describe
 from django.shortcuts import redirect, render
-from .models import Room,Topic
+from .models import Message, Room,Topic
 from .forms import RoomForm
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -72,7 +72,17 @@ def home(request):
 
 def room(request,pk):
     room = Room.objects.get(id=pk)
-    context = {'room': room}
+    room_messages = room.message_set.all().order_by('-created')
+    participants = room.participants.all()
+    if request.method=='POST':
+        message = Message.objects.create(
+            user = request.user,
+            room = room,
+            body = request.POST.get('body')
+        )
+        return redirect('room', pk=room.id)
+    context = {'room': room,'room_messages':room_messages,
+    'participants':participants}
     return render(request,'room.html',context)
 
 @login_required(login_url='login')
