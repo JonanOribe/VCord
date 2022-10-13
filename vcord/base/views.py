@@ -1,14 +1,27 @@
 from multiprocessing import context
+from pydoc import describe
 from django.shortcuts import redirect, render
 from .models import Room,Topic
 from .forms import RoomForm
-# Create your views here.
+from django.db.models import Q
+
+
+def loginPage(request):
+    context = {}
+    return render(request,'login_register.html',context)
 
 def home(request):
-    rooms = Room.objects.all()
+    q = request.GET.get('q') if request.GET.get('q') != None else ''
+    rooms = Room.objects.filter(
+        Q(topic__name__icontains=q) |
+        Q(name__icontains=q) |
+        Q(description__icontains=q)
+        )
     topics = Topic.objects.all()
+    room_count = rooms.count()
     context = {'rooms':rooms,
-    'topics':topics}
+    'topics':topics,
+    'room_count':room_count}
     return render(request,'home.html',context)
 
 def room(request,pk):
